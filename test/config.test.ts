@@ -12,7 +12,10 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 })
 
 import { findConfig, loadConfig } from '../src/config.js'
-import { resolveConfig as resolveVitePlusConfig } from '../src/vite-plus-shim.js'
+import {
+  resolveConfig as resolveVitePlusConfig,
+  resolveConfigFromFile,
+} from '../src/vite-plus-shim.js'
 import {
   cleanupTemporaryDirectories,
   createTempDirectory,
@@ -45,14 +48,20 @@ describe('config discovery', () => {
     })
   })
 
-  test('loads the nearest unified config from a Vite config directory', async () => {
+  test.each([
+    {
+      name: 'resolveConfig',
+      resolve: (configFile: string) => resolveVitePlusConfig({ configFile }, 'build'),
+    },
+    { name: 'resolveConfigFromFile', resolve: resolveConfigFromFile },
+  ])('$name loads the nearest unified config from a Vite config directory', async ({ resolve }) => {
     const { directory } = await createUnifiedFixture()
     const viteDirectory = path.join(directory, 'packages', 'app')
     const viteConfigPath = path.join(viteDirectory, 'vite.config.ts')
     await mkdir(viteDirectory, { recursive: true })
     await writeFile(viteConfigPath, 'export default {}\n')
 
-    await expect(resolveVitePlusConfig({ configFile: viteConfigPath }, 'build')).resolves.toEqual({
+    await expect(resolve(viteConfigPath)).resolves.toEqual({
       lint: { rules: { 'no-debugger': 'deny' } },
       fmt: { semi: false, singleQuote: true },
     })

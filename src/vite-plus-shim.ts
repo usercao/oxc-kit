@@ -18,6 +18,12 @@ export async function resolveConfig(
     throw new TypeError('vite-plus resolveConfig requires a configFile path')
   }
 
-  const configPath = await findConfig(path.dirname(path.resolve(options.configFile)))
+  return resolveConfigFromFile(options.configFile)
+}
+
+export async function resolveConfigFromFile(
+  configFile: string,
+): Promise<Awaited<ReturnType<typeof loadConfig>>> {
+  const configPath = await findConfig(path.dirname(path.resolve(configFile)))
   return loadConfig(configPath)
 }

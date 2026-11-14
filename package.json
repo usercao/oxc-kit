@@ -63,15 +63,15 @@
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1",
-    "oxfmt": "^0.76.0",
-    "oxlint": "^1.91.0",
-    "oxlint-tsgolint": "^7.0.2006"
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2007"
   },
   "devDependencies": {
     "@types/node": "^24",
-    "tsdown": "^0.23.5",
+    "tsdown": "^0.23.7",
     "typescript": "^6",
-    "vite": "^8.3.6",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "peerDependencies": {
