@@ -63,14 +63,14 @@
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1",
-    "oxfmt": "^0.78.0",
-    "oxlint": "^1.93.0",
+    "oxfmt": "^0.79.0",
+    "oxlint": "^1.94.0",
     "oxlint-tsgolint": "^7.0.2007"
   },
   "devDependencies": {
-    "@types/node": "^24",
+    "@types/node": "^26.6.6",
     "tsdown": "^0.23.7",
-    "typescript": "^6",
+    "typescript": "^7.0.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
