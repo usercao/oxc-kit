@@ -107,6 +107,12 @@ describe('config discovery', () => {
     },
   )
 
+  test('reuses the loaded configuration module while the file is unchanged', async () => {
+    const { configPath } = await createUnifiedFixture()
+
+    expect(await loadConfig(configPath)).toBe(await loadConfig(configPath))
+  })
+
   test('keeps imported configuration modules cached until process restart', async () => {
     const directory = await createTempDirectory('vite-oxc-bridge-import-cache-')
     const optionsPath = path.join(directory, 'format-options.mjs')

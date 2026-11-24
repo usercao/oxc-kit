@@ -1,4 +1,4 @@
-import { access } from 'node:fs/promises'
+import { access, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -70,7 +70,9 @@ export async function loadConfig(configPath: string): Promise<OxcConfig> {
     delete require.cache[absolutePath]
   }
   const moduleUrl = pathToFileURL(absolutePath)
-  moduleUrl.searchParams.set('oxc-bridge-cache', `${Date.now()}-${Math.random()}`)
+  // Only re-import when the file changes; every distinct URL stays in the ESM cache forever.
+  const { mtimeMs, size } = await stat(absolutePath)
+  moduleUrl.searchParams.set('oxc-bridge-cache', `${mtimeMs}-${size}`)
 
   const configModule = (await import(moduleUrl.href)) as { default?: unknown }
   if (!isObject(configModule.default)) {
