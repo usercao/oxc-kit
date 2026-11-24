@@ -1,18 +1,14 @@
-import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
+import { startLspSession } from '../test/lsp-session.ts'
+
 interface CommandOutput {
   stderr: string
   stdout: string
-}
-
-interface LspMessage {
-  error?: { message?: string }
-  id?: number
-  method?: string
 }
 
 type OxcTool = 'oxfmt' | 'oxlint'
@@ -69,162 +65,49 @@ function packageEnvironment(projectDirectory: string): NodeJS.ProcessEnv {
   }
 }
 
-function spawnPackageBin(
-  name: PackageBin,
-  args: string[],
-  projectDirectory: string,
-): ChildProcessWithoutNullStreams {
-  const entryPath = path.join(
+function packageBinPath(name: PackageBin, projectDirectory: string): string {
+  return path.join(
     projectDirectory,
     'node_modules',
     'vite-oxc-bridge',
     name === 'oxc' ? 'dist/cli.js' : `bin/${name}.js`,
   )
-  return spawn(process.execPath, [entryPath, ...args], {
-    cwd: projectDirectory,
-    env: packageEnvironment(projectDirectory),
-    stdio: ['pipe', 'pipe', 'pipe'],
-  })
 }
 
-async function runPackageBin(
+function runPackageBin(
   name: PackageBin,
   args: string[],
   projectDirectory: string,
 ): Promise<CommandOutput> {
-  return new Promise((resolve, reject) => {
-    const child = spawnPackageBin(name, args, projectDirectory)
-    let stdout = ''
-    let stderr = ''
-
-    child.stdout.setEncoding('utf8')
-    child.stderr.setEncoding('utf8')
-    child.stdout.on('data', (chunk: string) => {
-      stdout += chunk
-    })
-    child.stderr.on('data', (chunk: string) => {
-      stderr += chunk
-    })
-    child.once('error', reject)
-    child.once('close', (exitCode) => {
-      if (exitCode === 0) {
-        resolve({ stderr, stdout })
-        return
-      }
-      reject(
-        new Error(`${name} ${args.join(' ')} exited with code ${exitCode}\n${stdout}${stderr}`),
-      )
-    })
-  })
-}
-
-function encodeLspMessage(message: object): string {
-  const body = JSON.stringify(message)
-  return `Content-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`
+  return runCommand(
+    process.execPath,
+    [packageBinPath(name, projectDirectory), ...args],
+    projectDirectory,
+    packageEnvironment(projectDirectory),
+  )
 }
 
 async function initializeLanguageServer(tool: OxcTool, projectDirectory: string): Promise<void> {
-  const child = spawnPackageBin(tool, ['--lsp'], projectDirectory)
-  const rootUri = pathToFileURL(projectDirectory).href
-  let buffer = Buffer.alloc(0)
-  let stderr = ''
-
-  child.stderr.setEncoding('utf8')
-  child.stderr.on('data', (chunk: string) => {
-    stderr += chunk
+  const session = startLspSession(packageBinPath(tool, projectDirectory), {
+    cwd: projectDirectory,
+    env: packageEnvironment(projectDirectory),
+    name: `installed ${tool}`,
+    timeoutMs: 15_000,
   })
+  const rootUri = pathToFileURL(projectDirectory).href
+  const options =
+    tool === 'oxfmt' ? { 'fmt.disableNestedConfig': true } : { disableNestedConfig: true }
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error(`Timed out initializing installed ${tool} LSP\n${stderr}`))
-      }, 15_000)
-
-      function finish(error?: Error): void {
-        clearTimeout(timeout)
-        if (error) {
-          reject(error)
-        } else {
-          resolve()
-        }
-      }
-
-      child.once('error', finish)
-      child.once('close', (exitCode) => {
-        if (exitCode === 0) {
-          finish()
-        } else {
-          finish(new Error(`Installed ${tool} LSP exited with code ${exitCode}\n${stderr}`))
-        }
-      })
-      child.stdout.on('data', (chunk: Buffer) => {
-        buffer = Buffer.concat([buffer, chunk])
-
-        while (true) {
-          const headerEnd = buffer.indexOf('\r\n\r\n')
-          if (headerEnd === -1) {
-            return
-          }
-          const header = buffer.subarray(0, headerEnd).toString('utf8')
-          const contentLength = /Content-Length: (\d+)/i.exec(header)?.[1]
-          if (!contentLength) {
-            finish(new Error(`Installed ${tool} LSP sent an invalid header: ${header}`))
-            return
-          }
-          const messageEnd = headerEnd + 4 + Number(contentLength)
-          if (buffer.length < messageEnd) {
-            return
-          }
-
-          const message = JSON.parse(
-            buffer.subarray(headerEnd + 4, messageEnd).toString('utf8'),
-          ) as LspMessage
-          buffer = buffer.subarray(messageEnd)
-          if (message.method && message.id !== undefined) {
-            child.stdin.write(encodeLspMessage({ id: message.id, jsonrpc: '2.0', result: null }))
-            continue
-          }
-          if (message.id === 2) {
-            if (message.error) {
-              finish(new Error(message.error.message ?? `Installed ${tool} LSP shutdown failed`))
-            } else {
-              child.stdin.write(encodeLspMessage({ jsonrpc: '2.0', method: 'exit' }))
-            }
-            return
-          }
-          if (message.id !== 1) {
-            continue
-          }
-          if (message.error) {
-            finish(new Error(message.error.message ?? `Installed ${tool} LSP initialize failed`))
-          } else {
-            child.stdin.write(
-              encodeLspMessage({ id: 2, jsonrpc: '2.0', method: 'shutdown', params: null }),
-            )
-          }
-          return
-        }
-      })
-
-      const options =
-        tool === 'oxfmt' ? { 'fmt.disableNestedConfig': true } : { disableNestedConfig: true }
-      child.stdin.write(
-        encodeLspMessage({
-          id: 1,
-          jsonrpc: '2.0',
-          method: 'initialize',
-          params: {
-            capabilities: {},
-            initializationOptions: [{ options, workspaceUri: rootUri }],
-            processId: process.pid,
-            rootUri,
-            workspaceFolders: [{ name: 'package-smoke', uri: rootUri }],
-          },
-        }),
-      )
+    await session.request('initialize', {
+      capabilities: {},
+      initializationOptions: [{ options, workspaceUri: rootUri }],
+      processId: process.pid,
+      rootUri,
+      workspaceFolders: [{ name: 'package-smoke', uri: rootUri }],
     })
   } finally {
-    child.kill('SIGTERM')
+    await session.close()
   }
 }
 
