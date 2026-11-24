@@ -1,7 +1,5 @@
-import { pathToFileURL } from 'node:url'
-
-import './vite-plus-preload.ts'
-import { enableVitePlusConfigDiscovery, resolveToolBin, TOOL_USAGE } from './tool.ts'
+import { runTool } from './runner.ts'
+import { TOOL_USAGE } from './tool.ts'
 import type { OxcTool } from './types.ts'
 
 function isEditorInvocation(tool: OxcTool): boolean {
@@ -22,6 +20,5 @@ export async function runWrappedTool(tool: OxcTool): Promise<void> {
     return
   }
 
-  enableVitePlusConfigDiscovery(process.env, tool)
-  await import(pathToFileURL(resolveToolBin(tool)).href)
+  await runTool(tool, process.argv.slice(2))
 }

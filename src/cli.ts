@@ -16,11 +16,11 @@ Options:
   -h, --help           Show this help
 `
 
-async function main(): Promise<number> {
+async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2)
   if (!command || command === '--help' || command === '-h') {
     process.stdout.write(HELP)
-    return 0
+    return
   }
 
   if (command === 'init') {
@@ -32,21 +32,22 @@ async function main(): Promise<number> {
     const verb =
       result === 'created' ? 'Created' : result === 'updated' ? 'Updated' : 'Already configured'
     process.stdout.write(`${verb} .vscode/settings.json\n`)
-    return 0
+    return
   }
 
   const tool = (Object.keys(TOOL_USAGE) as OxcTool[]).find(
     (candidate) => TOOL_USAGE[candidate].command === command,
   )
   if (tool) {
-    return runTool(tool, args)
+    await runTool(tool, args)
+    return
   }
 
   throw new Error(`Unknown command: ${command}\n\n${HELP}`)
 }
 
 try {
-  process.exitCode = await main()
+  await main()
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error)
   process.stderr.write(`oxc: ${message}\n`)

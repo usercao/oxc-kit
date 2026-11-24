@@ -1,14 +1,42 @@
+import { spawn } from 'node:child_process'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { runTool } from '../src/runner.ts'
 import {
   cleanupTemporaryDirectories,
   createTempDirectory,
   createUnifiedFixture,
 } from './helpers.ts'
+
+const CLI_PATH = fileURLToPath(new URL('../src/cli.ts', import.meta.url))
+
+function runOxc(
+  command: 'fmt' | 'lint',
+  args: string[],
+  cwd: string,
+): Promise<{ exitCode: number | null; output: string }> {
+  const child = spawn(process.execPath, [CLI_PATH, command, ...args], {
+    cwd,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  let output = ''
+  child.stdout.setEncoding('utf8')
+  child.stderr.setEncoding('utf8')
+  child.stdout.on('data', (chunk: string) => {
+    output += chunk
+  })
+  child.stderr.on('data', (chunk: string) => {
+    output += chunk
+  })
+
+  return new Promise((resolve, reject) => {
+    child.once('error', reject)
+    child.once('close', (exitCode) => resolve({ exitCode, output }))
+  })
+}
 
 afterEach(async () => {
   await cleanupTemporaryDirectories()
@@ -20,12 +48,12 @@ describe('runner integration', () => {
     const sourcePath = path.join(directory, 'source.ts')
     await writeFile(sourcePath, `const message = "hello";\nconsole.log(message);\n`)
 
-    expect(await runTool('oxfmt', ['source.ts'], { cwd: directory })).toBe(0)
+    expect((await runOxc('fmt', ['source.ts'], directory)).exitCode).toBe(0)
     expect(await readFile(sourcePath, 'utf8')).toBe(
       `const message = 'hello'\nconsole.log(message)\n`,
     )
-    expect(await runTool('oxfmt', ['--check', '.'], { cwd: directory })).toBe(0)
-    expect(await runTool('oxlint', ['source.ts'], { cwd: directory })).toBe(0)
+    expect((await runOxc('fmt', ['--check', '.'], directory)).exitCode).toBe(0)
+    expect((await runOxc('lint', ['source.ts'], directory)).exitCode).toBe(0)
   })
 
   test('loads a parent unified config from a nested working directory', async () => {
@@ -35,23 +63,16 @@ describe('runner integration', () => {
     const sourcePath = path.join(nestedDirectory, 'source.ts')
     await writeFile(sourcePath, 'const message = "hello";\n')
 
-    expect(await runTool('oxfmt', ['source.ts'], { cwd: nestedDirectory })).toBe(0)
+    expect((await runOxc('fmt', ['source.ts'], nestedDirectory)).exitCode).toBe(0)
     expect(await readFile(sourcePath, 'utf8')).toBe("const message = 'hello'\n")
   })
 
   test('returns the underlying Oxlint failure code', async () => {
     const { directory } = await createUnifiedFixture()
     await writeFile(path.join(directory, 'source.ts'), 'debugger\n')
-    let output = ''
+    const { exitCode, output } = await runOxc('lint', ['source.ts'], directory)
 
-    expect(
-      await runTool('oxlint', ['source.ts'], {
-        cwd: directory,
-        onOutput: (chunk) => {
-          output += chunk
-        },
-      }),
-    ).not.toBe(0)
+    expect(exitCode).not.toBe(0)
     expect(output).toContain('eslint(no-debugger)')
   })
 
@@ -82,7 +103,7 @@ describe('runner integration', () => {
 }\n`,
     )
 
-    expect(await runTool('oxfmt', ['.'], { cwd: directory })).toBe(0)
+    expect((await runOxc('fmt', ['.'], directory)).exitCode).toBe(0)
     expect(await readFile(packageJsonPath, 'utf8')).toBe(`{
   "name": "fixture",
   "scripts": {
@@ -99,7 +120,7 @@ describe('runner integration', () => {
     await writeFile(sourcePath, 'const message = "hello";\n')
 
     expect(
-      await runTool('oxfmt', ['--config', 'vite.config.ts', 'source.ts'], { cwd: directory }),
+      (await runOxc('fmt', ['--config', 'vite.config.ts', 'source.ts'], directory)).exitCode,
     ).toBe(0)
     expect(await readFile(sourcePath, 'utf8')).toBe("const message = 'hello'\n")
   })
@@ -109,7 +130,7 @@ describe('runner integration', () => {
   fmt: { semi: false },
 }\n`)
 
-    expect(await runTool('oxlint', ['source.ts'], { cwd: directory })).not.toBe(0)
+    expect((await runOxc('lint', ['source.ts'], directory)).exitCode).not.toBe(0)
   })
 
   test('runs type-aware lint with the bridge-owned tsgolint runtime', async () => {
@@ -127,6 +148,6 @@ describe('runner integration', () => {
     )
     await writeFile(path.join(directory, 'source.ts'), 'const _value: string = "ok"\n')
 
-    expect(await runTool('oxlint', ['--type-aware', 'source.ts'], { cwd: directory })).toBe(0)
+    expect((await runOxc('lint', ['--type-aware', 'source.ts'], directory)).exitCode).toBe(0)
   })
 })
