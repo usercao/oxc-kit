@@ -13,3 +13,17 @@ registerHooks({
       : nextResolve(specifier, context)
   },
 })
+
+// Configs in packages without `"type": "module"` are reparsed as ES modules; hide Node's
+// warning about it, as Vite+ does with `--disable-warning=MODULE_TYPELESS_PACKAGE_JSON`.
+const emitWarning = process.emitWarning.bind(process) as (...args: unknown[]) => void
+process.emitWarning = ((...args: unknown[]) => {
+  const [, typeOrOptions, code] = args
+  const warningCode =
+    typeof typeOrOptions === 'object' && typeOrOptions !== null && 'code' in typeOrOptions
+      ? typeOrOptions.code
+      : code
+  if (warningCode !== 'MODULE_TYPELESS_PACKAGE_JSON') {
+    emitWarning(...args)
+  }
+}) as typeof process.emitWarning

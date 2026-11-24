@@ -56,6 +56,22 @@ describe('oxc CLI', () => {
     expect((await runOxc('lint', ['source.ts'], directory)).exitCode).toBe(0)
   })
 
+  test('loads an ES module config without a package type warning', async () => {
+    const directory = await createTempDirectory('vite-oxc-bridge-typeless-')
+    await writeFile(path.join(directory, 'package.json'), '{ "name": "fixture" }\n')
+    await writeFile(path.join(directory, 'vite.config.ts'), 'export default {}\n')
+    await writeFile(
+      path.join(directory, 'oxc.config.ts'),
+      'export default { fmt: { semi: false } }\n',
+    )
+    await writeFile(path.join(directory, 'source.ts'), 'const message = "hello"\n')
+
+    const { exitCode, output } = await runOxc('fmt', ['--check', 'source.ts'], directory)
+
+    expect(exitCode).toBe(0)
+    expect(output).not.toContain('MODULE_TYPELESS_PACKAGE_JSON')
+  })
+
   test('loads a parent unified config from a nested working directory', async () => {
     const { directory } = await createUnifiedFixture()
     const nestedDirectory = path.join(directory, 'packages', 'app')
