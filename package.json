@@ -56,7 +56,6 @@
     "lint": "yarn exec oxlint .",
     "lint:fix": "yarn exec oxlint --fix .",
     "prepack": "yarn build",
-    "prepublishOnly": "yarn test",
     "test": "tsc -p tsconfig.json && yarn build && vitest run",
     "test:package": "node scripts/package-smoke.ts",
     "test:windows": "yarn build && vitest run test/tool.test.ts test/integration.test.ts test/language-server.test.ts && yarn test:package"
