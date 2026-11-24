@@ -69,7 +69,7 @@ function packageBinPath(name: PackageBin, projectDirectory: string): string {
   return path.join(
     projectDirectory,
     'node_modules',
-    'vite-oxc-bridge',
+    'oxc-kit',
     name === 'oxc' ? 'dist/cli.js' : `bin/${name}.js`,
   )
 }
@@ -113,8 +113,8 @@ async function initializeLanguageServer(tool: OxcTool, projectDirectory: string)
   }
 }
 
-const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'vite-oxc-bridge-package-'))
-const tarballPath = path.join(temporaryDirectory, 'vite-oxc-bridge.tgz')
+const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'oxc-kit-package-'))
+const tarballPath = path.join(temporaryDirectory, 'oxc-kit.tgz')
 const projectDirectory = path.join(temporaryDirectory, 'consumer')
 
 try {
@@ -144,7 +144,7 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "import { defineConfig } from 'vite-oxc-bridge'; if (typeof defineConfig !== 'function') process.exit(1)",
+      "import { defineConfig } from 'oxc-kit'; if (typeof defineConfig !== 'function') process.exit(1)",
     ],
     projectDirectory,
   )

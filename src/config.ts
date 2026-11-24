@@ -61,7 +61,7 @@ export async function loadConfig(configPath: string): Promise<OxcConfig> {
   const moduleUrl = pathToFileURL(absolutePath)
   // Only re-import when the file changes; every distinct URL stays in the ESM cache forever.
   const { mtimeMs, size } = await stat(absolutePath)
-  moduleUrl.searchParams.set('oxc-bridge-cache', `${mtimeMs}-${size}`)
+  moduleUrl.searchParams.set('oxc-kit-cache', `${mtimeMs}-${size}`)
 
   const configModule = (await import(moduleUrl.href)) as { default?: unknown }
   if (!isObject(configModule.default)) {

@@ -28,7 +28,7 @@ export async function createUnifiedFixture(
   configPath: string
   directory: string
 }> {
-  const directory = await createTempDirectory('vite-oxc-bridge-test-')
+  const directory = await createTempDirectory('oxc-kit-test-')
   const configPath = path.join(directory, 'oxc.config.mjs')
   await writeFile(configPath, source)
   return { configPath, directory }

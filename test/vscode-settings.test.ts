@@ -58,7 +58,7 @@ describe('VS Code settings initialization', () => {
   })
 
   test('requires a unified config to point the settings at', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-vscode-settings-')
+    const directory = await createTempDirectory('oxc-kit-vscode-settings-')
 
     await expect(initializeVsCodeSettings(directory)).rejects.toThrow(/before running oxc init/)
   })

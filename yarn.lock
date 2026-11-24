@@ -1271,6 +1271,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"oxc-kit@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "oxc-kit@workspace:."
+  dependencies:
+    "@types/node": "npm:^24"
+    jsonc-parser: "npm:^3.3.1"
+    oxfmt: "npm:^0.80.0"
+    oxlint: "npm:^1.95.0"
+    oxlint-tsgolint: "npm:^7.0.2008"
+    tsdown: "npm:^0.23.7"
+    typescript: "npm:^7"
+    vite: "npm:^8.3.8"
+    vitest: "npm:^5.1.1"
+  bin:
+    oxc: dist/cli.js
+    oxfmt: bin/oxfmt.js
+    oxlint: bin/oxlint.js
+  languageName: unknown
+  linkType: soft
+
 "oxfmt@npm:^0.80.0":
   version: 0.80.0
   resolution: "oxfmt@npm:0.80.0"
@@ -1960,26 +1980,6 @@ __metadata:
   checksum: 10c0/0bad45304bd0b3d2e56e4bdb422a43863c7a86902741eb632adb104ea37e1213706e08be4eaa7b3e28f843658be56ace16081d3ed3478477a5872f94a83ef7d0
   languageName: node
   linkType: hard
-
-"vite-oxc-bridge@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "vite-oxc-bridge@workspace:."
-  dependencies:
-    "@types/node": "npm:^24"
-    jsonc-parser: "npm:^3.3.1"
-    oxfmt: "npm:^0.80.0"
-    oxlint: "npm:^1.95.0"
-    oxlint-tsgolint: "npm:^7.0.2008"
-    tsdown: "npm:^0.23.7"
-    typescript: "npm:^7"
-    vite: "npm:^8.3.8"
-    vitest: "npm:^5.1.1"
-  bin:
-    oxc: dist/cli.js
-    oxfmt: bin/oxfmt.js
-    oxlint: bin/oxlint.js
-  languageName: unknown
-  linkType: soft
 
 "vite@npm:^8.3.8":
   version: 8.3.8

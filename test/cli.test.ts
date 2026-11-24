@@ -57,7 +57,7 @@ describe('oxc CLI', () => {
   })
 
   test('loads an ES module config without a package type warning', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-typeless-')
+    const directory = await createTempDirectory('oxc-kit-typeless-')
     await writeFile(path.join(directory, 'package.json'), '{ "name": "fixture" }\n')
     await writeFile(
       path.join(directory, 'oxc.config.ts'),
@@ -92,7 +92,7 @@ describe('oxc CLI', () => {
   })
 
   test('preserves sortPackageJson rules for package.json files', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-package-json-')
+    const directory = await createTempDirectory('oxc-kit-package-json-')
 
     await writeFile(
       path.join(directory, 'oxc.config.mjs'),
@@ -151,7 +151,7 @@ describe('oxc CLI', () => {
     expect((await runOxc('lint', ['source.ts'], directory)).exitCode).not.toBe(0)
   })
 
-  test('runs type-aware lint with the bridge-owned tsgolint runtime', async () => {
+  test('runs type-aware lint with the bundled tsgolint runtime', async () => {
     const { directory } = await createUnifiedFixture(`export default {
   lint: { options: { typeAware: true } },
 }

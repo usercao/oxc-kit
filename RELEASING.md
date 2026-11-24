@@ -9,8 +9,8 @@ Do not add an `NPM_TOKEN` or `NODE_AUTH_TOKEN` secret. The publish workflow uses
 Before releasing, confirm:
 
 - CI passes on `main`.
-- `repository.url` still exactly matches `https://github.com/usercao/vite-oxc-bridge`.
-- npm Trusted Publisher still authorizes `usercao/vite-oxc-bridge` and `.github/workflows/publish.yml` for `npm publish`.
+- `repository.url` still exactly matches `https://github.com/usercao/oxc-kit`.
+- npm Trusted Publisher still authorizes `usercao/oxc-kit` and `.github/workflows/publish.yml` for `npm publish`.
 
 Run the complete local check:
 

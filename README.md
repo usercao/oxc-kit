@@ -1,47 +1,56 @@
-# Vite Oxc Bridge
+# oxc-kit
 
-Configure Oxfmt and Oxlint from one typed `oxc.config.*` file in a Vite project.
-
-Instead of maintaining separate `.oxfmtrc.json` and `.oxlintrc.json` files, put their options
-under `fmt` and `lint` in a single configuration:
-
-| Unified config | Replaces         | Used by |
-| -------------- | ---------------- | ------- |
-| `lint`         | `.oxlintrc.json` | Oxlint  |
-| `fmt`          | `.oxfmtrc.json`  | Oxfmt   |
-
-## Install
-
-```sh
-npm install --save-dev vite-oxc-bridge
-```
-
-## Configure
-
-Oxfmt and Oxlint only hand config loading to the bridge after they find a `vite.config.*` file, so
-keep your project's existing one. The bridge never reads it, so projects without Vite can add an
-empty `vite.config.ts` containing `export default {}`; Vite itself does not need to be installed.
-Move the contents of `.oxfmtrc.json` into `fmt` and `.oxlintrc.json` into `lint`:
+One typed `oxc.config.ts` for [Oxfmt](https://oxc.rs/docs/guide/usage/formatter) and
+[Oxlint](https://oxc.rs/docs/guide/usage/linter), on the command line and in your editor.
 
 ```ts
 // oxc.config.ts
-import { defineConfig } from 'vite-oxc-bridge'
+import { defineConfig } from 'oxc-kit'
 
 export default defineConfig({
-  lint: {
-    // Add your Oxlint configuration here
-  },
   fmt: {
-    // Add your Oxfmt configuration here
+    semi: false,
+    singleQuote: true,
+  },
+  lint: {
+    rules: {
+      'no-debugger': 'error',
+    },
   },
 })
 ```
 
-`defineConfig` preserves the native Oxfmt and Oxlint option types. After migrating, remove the
-separate `.oxfmtrc.json` and `.oxlintrc.json` files so that `oxc.config.*` remains the single source
-of truth. Either `fmt` or `lint` may be omitted when the corresponding tool is not used.
+- **One file** replaces `.oxfmtrc.json` and `.oxlintrc.json`.
+- **Typed**: `defineConfig` keeps the native Oxfmt and Oxlint option types.
+- **No extra tooling**: the original `oxfmt` and `oxlint` binaries do the work; no Vite or Vite+
+  is required.
+
+## Install
+
+```sh
+npm install --save-dev oxc-kit
+```
+
+`oxc-kit` installs `oxfmt`, `oxlint`, and `oxlint-tsgolint` for you; you do not need to add them
+separately.
+
+## Configure
+
+Create `oxc.config.ts` in the project root. Put your Oxfmt options under `fmt` and your Oxlint
+options under `lint`, exactly as they would appear in `.oxfmtrc.json` and `.oxlintrc.json`. Either
+section may be omitted.
+
+When migrating, move the contents of `.oxfmtrc.json` into `fmt` and `.oxlintrc.json` into `lint`,
+then delete both files.
+
+The config may also be named `oxc.config.mts`, `.cts`, `.js`, `.mjs`, or `.cjs`, and must
+default-export an object. TypeScript configs run through Node.js type stripping, so syntax that
+needs transformation, such as `enum` or `namespace`, is not supported.
 
 ## Commands
+
+`oxc fmt` and `oxc lint` find the nearest `oxc.config.*` from the current directory and pass all
+other arguments to Oxfmt and Oxlint unchanged:
 
 ```json
 {
@@ -54,32 +63,40 @@ of truth. Either `fmt` or `lint` may be omitted when the corresponding tool is n
 }
 ```
 
+Pass `--config <path>` to use a different config file.
+
 ## VS Code
 
-Install the [Oxc extension](https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode), then run:
+Install the [Oxc extension](https://marketplace.visualstudio.com/items?itemName=oxc.oxc-vscode),
+then run:
 
 ```sh
 npx --no-install oxc init
 ```
 
-This creates or merges the required settings in `.vscode/settings.json` without replacing existing values or JSONC comments. The extension discovers the package wrappers automatically; do not set `oxc.path.oxfmt` or `oxc.path.oxlint`.
+This creates or updates `.vscode/settings.json` so that the extension formats and lints with
+`oxc.config.*`. Existing values and JSONC comments are kept. The extension finds the `oxc-kit`
+binaries automatically; do not set `oxc.path.oxfmt` or `oxc.path.oxlint`.
 
-## How It Works
+The config file is reloaded when it changes. Modules imported by the config are cached until the
+editor restarts the Oxc language servers.
 
-Vite Oxc Bridge discovers the nearest `oxc.config.*` and passes it unchanged to the original Oxfmt
-and Oxlint binaries, which read the `fmt` and `lint` sections respectively. Internally, the bridge
-implements the unified configuration protocol used by Vite+; Vite and its plugins are not started.
+## How it works
 
-The root `oxc.config.*` file is reloaded when Oxc requests it after the file has changed. Node.js caches modules imported by that file for the lifetime of the process, so restart the Oxc language servers after changing imported configuration helpers.
+Oxfmt and Oxlint can read their options from a section of a larger config file through the
+protocol that [Vite+](https://viteplus.dev) uses for `vite.config.ts`. `oxc-kit` implements that
+protocol for `oxc.config.*`:
+
+1. `oxc fmt`, `oxc lint`, and the editor wrappers run the original Oxfmt and Oxlint in-process
+   with Vite+ config loading enabled.
+2. The config path comes from `--config` on the command line, or from the `oxc.configPath` and
+   `oxc.fmt.configPath` settings in the editor.
+3. When Oxfmt or Oxlint asks Vite+ to load that file, `oxc-kit` answers instead and returns the
+   `fmt` or `lint` section.
 
 ## Requirements
 
 - Node.js 24.22.0 or later
-- A `vite.config.*` file next to or above the files being checked. Its content is not read, and Vite
-  does not need to be installed.
-- An `oxc.config.ts`, `.mts`, `.cts`, `.js`, `.mjs`, or `.cjs` file that default-exports an object.
-  TypeScript configs run through Node.js type stripping, so syntax that needs transformation, such as
-  `enum` or `namespace`, is not supported.
 
 ## License
 

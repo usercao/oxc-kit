@@ -1,26 +1,24 @@
 {
-  "name": "vite-oxc-bridge",
+  "name": "oxc-kit",
   "version": "0.7.6",
-  "description": "Configure Oxfmt and Oxlint from one typed config in Vite projects",
+  "description": "Configure Oxfmt and Oxlint from one typed oxc.config.ts",
   "keywords": [
     "config",
     "formatter",
     "linter",
     "oxc",
     "oxfmt",
-    "oxlint",
-    "vite",
-    "vite-plus"
+    "oxlint"
   ],
-  "homepage": "https://github.com/usercao/vite-oxc-bridge#readme",
+  "homepage": "https://github.com/usercao/oxc-kit#readme",
   "bugs": {
-    "url": "https://github.com/usercao/vite-oxc-bridge/issues"
+    "url": "https://github.com/usercao/oxc-kit/issues"
   },
   "license": "MIT",
   "author": "usercao",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/usercao/vite-oxc-bridge.git"
+    "url": "git+https://github.com/usercao/oxc-kit.git"
   },
   "bin": {
     "oxc": "dist/cli.js",

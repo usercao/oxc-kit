@@ -63,7 +63,7 @@ describe('config discovery', () => {
   test.each(CONFIG_EXTENSION_CASES)(
     'loads an .$extension $module configuration',
     async ({ extension, module }) => {
-      const directory = await createTempDirectory(`vite-oxc-bridge-${extension}-config-`)
+      const directory = await createTempDirectory(`oxc-kit-${extension}-config-`)
       const configPath = path.join(directory, `oxc.config.${extension}`)
       const config = `{ fmt: { semi: false }, lint: {} }`
       const source =
@@ -84,7 +84,7 @@ describe('config discovery', () => {
   ])(
     'reloads the root .$extension configuration in a long-running process',
     async ({ extension, exportPrefix }) => {
-      const directory = await createTempDirectory(`vite-oxc-bridge-${extension}-reload-`)
+      const directory = await createTempDirectory(`oxc-kit-${extension}-reload-`)
       const configPath = path.join(directory, `oxc.config.${extension}`)
       await writeFile(configPath, `${exportPrefix}{ fmt: { semi: false } }\n`)
 
@@ -101,7 +101,7 @@ describe('config discovery', () => {
   })
 
   test('keeps imported configuration modules cached until process restart', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-import-cache-')
+    const directory = await createTempDirectory('oxc-kit-import-cache-')
     const optionsPath = path.join(directory, 'format-options.mjs')
     const configPath = path.join(directory, 'oxc.config.mjs')
     await writeFile(optionsPath, 'export default { semi: false }\n')
@@ -121,7 +121,7 @@ describe('config discovery', () => {
   })
 
   test('rejects multiple unified configs in the same directory', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-multi-config-')
+    const directory = await createTempDirectory('oxc-kit-multi-config-')
     await writeFile(path.join(directory, 'oxc.config.mjs'), 'export default { lint: {} }\n')
     await writeFile(path.join(directory, 'oxc.config.js'), 'export default { fmt: {} }\n')
 
@@ -129,13 +129,13 @@ describe('config discovery', () => {
   })
 
   test('reports when no unified config exists in the directory tree', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-no-config-')
+    const directory = await createTempDirectory('oxc-kit-no-config-')
 
     await expect(findConfig(directory)).resolves.toBeUndefined()
   })
 
   test('preserves file system errors while discovering a configuration', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-access-error-')
+    const directory = await createTempDirectory('oxc-kit-access-error-')
     const error = Object.assign(new Error('permission denied'), { code: 'EACCES' })
     readdirMock.mockRejectedValueOnce(error)
 

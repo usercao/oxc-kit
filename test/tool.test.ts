@@ -40,7 +40,7 @@ describe('Oxc tool integration', () => {
     await expect(access(environment.OXLINT_TSGOLINT_PATH!)).resolves.toBeUndefined()
   })
 
-  test('keeps normal CLI use on the bridge command', async () => {
+  test('keeps normal CLI use on the oxc command', async () => {
     for (const [tool, action] of [
       ['oxfmt', 'format'],
       ['oxlint', 'lint'],
