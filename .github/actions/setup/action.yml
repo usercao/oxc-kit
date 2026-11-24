@@ -1,0 +1,30 @@
+name: Setup
+description: Set up Node.js and Yarn with a dependency cache, then install dependencies
+
+inputs:
+  registry-url:
+    description: Optional npm registry URL to configure for publishing
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24.22.0
+        registry-url: ${{ inputs.registry-url }}
+        package-manager-cache: false
+    - run: corepack enable
+      shell: bash
+    - id: yarn-cache-dir
+      run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+      shell: bash
+    - uses: actions/cache@v6
+      with:
+        path: ${{ steps.yarn-cache-dir.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+    - run: yarn install --immutable
+      shell: bash
