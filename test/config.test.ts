@@ -142,6 +142,40 @@ describe('config discovery', () => {
     await expect(findConfig(directory)).rejects.toBe(error)
   })
 
+  // TODO: Remove with LEGACY_PACKAGE_NAME in src/config.ts; covers the old package name hint.
+  test.each([
+    {
+      extension: 'mjs',
+      source: "import { defineConfig } from 'vite-oxc-bridge'\nexport default defineConfig({})\n",
+    },
+    {
+      extension: 'cjs',
+      source:
+        "const { defineConfig } = require('vite-oxc-bridge')\nmodule.exports = defineConfig({})\n",
+    },
+  ])(
+    'explains how to migrate an .$extension config importing the old package name',
+    async ({ extension, source }) => {
+      const directory = await createTempDirectory(`oxc-kit-legacy-${extension}-`)
+      const configPath = path.join(directory, `oxc.config.${extension}`)
+      await writeFile(configPath, source)
+
+      await expect(loadConfig(configPath)).rejects.toThrow(
+        /imports 'vite-oxc-bridge', which was renamed to 'oxc-kit'/,
+      )
+    },
+  )
+
+  test('preserves errors for other missing packages', async () => {
+    const { configPath } = await createUnifiedFixture(
+      "import 'missing-oxc-kit-fixture'\nexport default {}\n",
+    )
+
+    await expect(loadConfig(configPath)).rejects.toThrow(
+      /Cannot find package 'missing-oxc-kit-fixture'/,
+    )
+  })
+
   test('preserves errors thrown while evaluating a configuration', async () => {
     const { configPath } = await createUnifiedFixture("throw new Error('fixture config failed')\n")
 

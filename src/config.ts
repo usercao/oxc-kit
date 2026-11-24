@@ -17,6 +17,17 @@ export const CONFIG_FILENAMES = [
 
 const require = createRequire(import.meta.url)
 
+// TODO: Remove this compatibility hint for the old `vite-oxc-bridge` package name in a future major release.
+const LEGACY_PACKAGE_NAME = 'vite-oxc-bridge'
+
+function isLegacyPackageImportError(error: unknown): boolean {
+  return (
+    hasErrorCode(error, 'ERR_MODULE_NOT_FOUND', 'MODULE_NOT_FOUND') &&
+    error instanceof Error &&
+    error.message.includes(`'${LEGACY_PACKAGE_NAME}'`)
+  )
+}
+
 async function readDirectoryEntries(directory: string): Promise<Set<string>> {
   try {
     return new Set(await readdir(directory))
@@ -63,7 +74,20 @@ export async function loadConfig(configPath: string): Promise<OxcConfig> {
   const { mtimeMs, size } = await stat(absolutePath)
   moduleUrl.searchParams.set('oxc-kit-cache', `${mtimeMs}-${size}`)
 
-  const configModule = (await import(moduleUrl.href)) as { default?: unknown }
+  let configModule: { default?: unknown }
+  try {
+    configModule = (await import(moduleUrl.href)) as { default?: unknown }
+  } catch (error) {
+    // TODO: Remove with LEGACY_PACKAGE_NAME; compatibility hint for the old package name.
+    if (isLegacyPackageImportError(error)) {
+      throw new Error(
+        `${absolutePath} imports '${LEGACY_PACKAGE_NAME}', which was renamed to 'oxc-kit'. ` +
+          `Replace the import with \`import { defineConfig } from 'oxc-kit'\`.`,
+        { cause: error },
+      )
+    }
+    throw error
+  }
   if (!isObject(configModule.default)) {
     throw new TypeError(`${absolutePath} must default-export a configuration object`)
   }
