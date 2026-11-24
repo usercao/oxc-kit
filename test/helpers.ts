@@ -18,25 +18,19 @@ export async function cleanupTemporaryDirectories(): Promise<void> {
   )
 }
 
-export async function writeUnifiedConfig(
-  directory: string,
+export async function createUnifiedFixture(
   source = `export default {
   lint: { rules: { 'no-debugger': 'deny' } },
   fmt: { semi: false, singleQuote: true },
 }
 `,
-): Promise<string> {
-  const configPath = path.join(directory, 'oxc.config.mjs')
-  await writeFile(configPath, source)
-  return configPath
-}
-
-export async function createUnifiedFixture(source?: string): Promise<{
+): Promise<{
   configPath: string
   directory: string
 }> {
   const directory = await createTempDirectory('vite-oxc-bridge-test-')
-  const configPath = await writeUnifiedConfig(directory, source)
+  const configPath = path.join(directory, 'oxc.config.mjs')
+  await writeFile(configPath, source)
   await writeFile(path.join(directory, 'vite.config.ts'), 'export default {}\n')
   return { configPath, directory }
 }

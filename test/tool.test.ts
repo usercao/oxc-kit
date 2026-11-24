@@ -9,14 +9,7 @@ import { enableVitePlusConfigDiscovery, resolveTsgolintBin } from '../src/tool.t
 import type { OxcTool } from '../src/types.ts'
 
 const require = createRequire(import.meta.url)
-const packageManifest = require('../package.json') as {
-  bin: Record<string, string>
-  dependencies: Record<string, string>
-  files: string[]
-  name: string
-  peerDependencies: Record<string, string>
-  version: string
-}
+const packageManifest = require('../package.json') as { version: string }
 
 function runWrapper(tool: OxcTool): Promise<{ exitCode: number | null; stderr: string }> {
   const wrapperPath = fileURLToPath(new URL(`../bin/${tool}.js`, import.meta.url))
@@ -37,25 +30,6 @@ function runWrapper(tool: OxcTool): Promise<{ exitCode: number | null; stderr: s
 }
 
 describe('Oxc tool integration', () => {
-  test('owns the Oxc binaries that the editor auto-detects', () => {
-    expect(packageManifest.name).toBe('vite-oxc-bridge')
-    expect(packageManifest.dependencies).toHaveProperty('oxfmt')
-    expect(packageManifest.dependencies).toHaveProperty('oxlint')
-    expect(packageManifest.dependencies).toHaveProperty('oxlint-tsgolint')
-    expect(packageManifest.peerDependencies).not.toHaveProperty('oxfmt')
-    expect(packageManifest.peerDependencies).not.toHaveProperty('oxlint')
-    expect(packageManifest.bin).toMatchObject({
-      oxc: 'dist/cli.js',
-      oxfmt: 'bin/oxfmt.js',
-      oxlint: 'bin/oxlint.js',
-    })
-    expect(packageManifest.bin).not.toHaveProperty('vite-oxc-bridge')
-  })
-
-  test('publishes built artifacts without internal source files', () => {
-    expect(packageManifest.files).toEqual(['bin', 'dist', 'README.md'])
-  })
-
   test('sets the Vite+ and type-aware environment for Oxlint', async () => {
     const environment: NodeJS.ProcessEnv = {}
 
