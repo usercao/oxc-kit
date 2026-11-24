@@ -50,16 +50,16 @@
   },
   "scripts": {
     "build": "node scripts/build.ts",
-    "check": "node scripts/check.ts",
+    "check": "yarn format:check && yarn lint && yarn test && yarn test:package && yarn pack --dry-run",
     "format": "yarn exec oxfmt --write .",
     "format:check": "yarn exec oxfmt --check .",
     "lint": "yarn exec oxlint .",
     "lint:fix": "yarn exec oxlint --fix .",
     "prepack": "yarn build",
     "prepublishOnly": "yarn test",
-    "test": "node scripts/test.ts",
+    "test": "tsc -p tsconfig.json && yarn build && vitest run",
     "test:package": "node scripts/package-smoke.ts",
-    "test:windows": "node scripts/test-windows.ts"
+    "test:windows": "yarn build && vitest run test/tool.test.ts test/integration.test.ts test/language-server.test.ts && yarn test:package"
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1",
