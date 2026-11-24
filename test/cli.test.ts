@@ -59,7 +59,6 @@ describe('oxc CLI', () => {
   test('loads an ES module config without a package type warning', async () => {
     const directory = await createTempDirectory('vite-oxc-bridge-typeless-')
     await writeFile(path.join(directory, 'package.json'), '{ "name": "fixture" }\n')
-    await writeFile(path.join(directory, 'vite.config.ts'), 'export default {}\n')
     await writeFile(
       path.join(directory, 'oxc.config.ts'),
       'export default { fmt: { semi: false } }\n',
@@ -105,7 +104,6 @@ describe('oxc CLI', () => {
   },
 }\n`,
     )
-    await writeFile(path.join(directory, 'vite.config.ts'), 'export default {}\n')
     const packageJsonPath = path.join(directory, 'package.json')
     await writeFile(
       packageJsonPath,
@@ -130,18 +128,22 @@ describe('oxc CLI', () => {
 }\n`)
   })
 
-  test('passes a native Vite config argument through to Oxc', async () => {
+  test('uses an explicit --config instead of the nearest unified config', async () => {
     const { directory } = await createUnifiedFixture()
+    await writeFile(
+      path.join(directory, 'custom.config.mjs'),
+      'export default { fmt: { semi: true } }\n',
+    )
     const sourcePath = path.join(directory, 'source.ts')
-    await writeFile(sourcePath, 'const message = "hello";\n')
+    await writeFile(sourcePath, 'const message = "hello"\n')
 
     expect(
-      (await runOxc('fmt', ['--config', 'vite.config.ts', 'source.ts'], directory)).exitCode,
+      (await runOxc('fmt', ['--config', 'custom.config.mjs', 'source.ts'], directory)).exitCode,
     ).toBe(0)
-    expect(await readFile(sourcePath, 'utf8')).toBe("const message = 'hello'\n")
+    expect(await readFile(sourcePath, 'utf8')).toBe('const message = "hello";\n')
   })
 
-  test('returns an error when the selected Vite+ section is missing', async () => {
+  test('returns an error when the selected config section is missing', async () => {
     const { directory } = await createUnifiedFixture(`export default {
   fmt: { semi: false },
 }\n`)

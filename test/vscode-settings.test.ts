@@ -4,25 +4,29 @@ import path from 'node:path'
 import { parse } from 'jsonc-parser'
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { initializeVsCodeSettings, VITE_PLUS_VSCODE_SETTINGS } from '../src/vscode-settings.ts'
-import { cleanupTemporaryDirectories, createTempDirectory } from './helpers.ts'
+import { createVsCodeSettings, initializeVsCodeSettings } from '../src/vscode-settings.ts'
+import {
+  cleanupTemporaryDirectories,
+  createTempDirectory,
+  createUnifiedFixture,
+} from './helpers.ts'
 
 afterEach(async () => {
   await cleanupTemporaryDirectories()
 })
 
 describe('VS Code settings initialization', () => {
-  test('creates the current Vite+ VS Code settings', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-vscode-settings-')
+  test('creates VS Code settings that point Oxc at the unified config', async () => {
+    const { directory } = await createUnifiedFixture()
 
     await expect(initializeVsCodeSettings(directory)).resolves.toBe('created')
     const settingsText = await readFile(path.join(directory, '.vscode', 'settings.json'), 'utf8')
 
-    expect(parse(settingsText)).toEqual(VITE_PLUS_VSCODE_SETTINGS)
+    expect(parse(settingsText)).toEqual(createVsCodeSettings('oxc.config.mjs'))
   })
 
-  test('merges missing Vite+ settings without replacing JSONC comments or existing values', async () => {
-    const directory = await createTempDirectory('vite-oxc-bridge-vscode-settings-')
+  test('merges missing settings without replacing JSONC comments or existing values', async () => {
+    const { directory } = await createUnifiedFixture()
     const settingsPath = path.join(directory, '.vscode', 'settings.json')
     await mkdir(path.dirname(settingsPath), { recursive: true })
     await writeFile(
@@ -43,6 +47,8 @@ describe('VS Code settings initialization', () => {
 
     expect(settingsText).toContain('// Keep project-specific formatter behavior.')
     expect(settings['editor.formatOnSave']).toBe(false)
+    expect(settings['oxc.configPath']).toBe('oxc.config.mjs')
+    expect(settings['oxc.fmt.configPath']).toBe('oxc.config.mjs')
     expect(settings['oxc.disableNestedConfig']).toBe(true)
     expect(settings['oxc.fmt.disableNestedConfig']).toBe(true)
     expect(settings['editor.codeActionsOnSave']).toEqual({
@@ -51,8 +57,14 @@ describe('VS Code settings initialization', () => {
     })
   })
 
-  test('rejects a malformed settings file without replacing it', async () => {
+  test('requires a unified config to point the settings at', async () => {
     const directory = await createTempDirectory('vite-oxc-bridge-vscode-settings-')
+
+    await expect(initializeVsCodeSettings(directory)).rejects.toThrow(/before running oxc init/)
+  })
+
+  test('rejects a malformed settings file without replacing it', async () => {
+    const { directory } = await createUnifiedFixture()
     const settingsPath = path.join(directory, '.vscode', 'settings.json')
     await mkdir(path.dirname(settingsPath), { recursive: true })
     await writeFile(settingsPath, '{ invalid')

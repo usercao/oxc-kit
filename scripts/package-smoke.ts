@@ -96,7 +96,9 @@ async function initializeLanguageServer(tool: OxcTool, projectDirectory: string)
   })
   const rootUri = pathToFileURL(projectDirectory).href
   const options =
-    tool === 'oxfmt' ? { 'fmt.disableNestedConfig': true } : { disableNestedConfig: true }
+    tool === 'oxfmt'
+      ? { 'fmt.configPath': 'oxc.config.mjs', 'fmt.disableNestedConfig': true }
+      : { configPath: 'oxc.config.mjs', disableNestedConfig: true }
 
   try {
     await session.request('initialize', {
@@ -127,7 +129,6 @@ try {
     ['install', '--no-audit', '--no-fund', tarballPath],
     projectDirectory,
   )
-  await writeFile(path.join(projectDirectory, 'vite.config.ts'), 'export default {}\n')
   await writeFile(
     path.join(projectDirectory, 'oxc.config.mjs'),
     `export default {

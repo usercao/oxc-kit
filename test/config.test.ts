@@ -45,20 +45,16 @@ describe('config discovery', () => {
     })
   })
 
-  test('resolveConfigFromFile loads the nearest unified config from a Vite config directory', async () => {
-    const { directory } = await createUnifiedFixture()
-    const viteDirectory = path.join(directory, 'packages', 'app')
-    const viteConfigPath = path.join(viteDirectory, 'vite.config.ts')
-    await mkdir(viteDirectory, { recursive: true })
-    await writeFile(viteConfigPath, 'export default {}\n')
+  test('resolveConfigFromFile loads the config file it is given', async () => {
+    const { configPath } = await createUnifiedFixture()
 
-    await expect(resolveConfigFromFile(viteConfigPath)).resolves.toEqual({
+    await expect(resolveConfigFromFile(configPath)).resolves.toEqual({
       lint: { rules: { 'no-debugger': 'deny' } },
       fmt: { semi: false, singleQuote: true },
     })
   })
 
-  test('passes Vite+ configuration fields through without bridge validation', async () => {
+  test('passes unknown configuration fields through without validation', async () => {
     const { configPath } = await createUnifiedFixture('export default { unrelated: true }\n')
 
     expect(await loadConfig(configPath)).toEqual({ unrelated: true })
@@ -135,7 +131,7 @@ describe('config discovery', () => {
   test('reports when no unified config exists in the directory tree', async () => {
     const directory = await createTempDirectory('vite-oxc-bridge-no-config-')
 
-    await expect(findConfig(directory)).rejects.toThrow(/No oxc\.config\.ts.*found from/)
+    await expect(findConfig(directory)).resolves.toBeUndefined()
   })
 
   test('preserves file system errors while discovering a configuration', async () => {

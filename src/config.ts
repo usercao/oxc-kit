@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url'
 import type { OxcConfig } from './types.ts'
 import { hasErrorCode, isObject } from './utils.ts'
 
-const CONFIG_FILENAMES = [
+export const CONFIG_FILENAMES = [
   'oxc.config.ts',
   'oxc.config.mts',
   'oxc.config.cts',
@@ -28,7 +28,8 @@ async function readDirectoryEntries(directory: string): Promise<Set<string>> {
   }
 }
 
-export async function findConfig(startDirectory = process.cwd()): Promise<string> {
+/** Finds the nearest `oxc.config.*` from `startDirectory` upwards. */
+export async function findConfig(startDirectory = process.cwd()): Promise<string | undefined> {
   let directory = path.resolve(startDirectory)
 
   while (true) {
@@ -46,7 +47,7 @@ export async function findConfig(startDirectory = process.cwd()): Promise<string
 
     const parent = path.dirname(directory)
     if (parent === directory) {
-      throw new Error(`No ${CONFIG_FILENAMES.join(', ')} found from ${startDirectory}`)
+      return undefined
     }
     directory = parent
   }

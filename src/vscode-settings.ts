@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { applyEdits, modify, parse, type FormattingOptions, type ParseError } from 'jsonc-parser'
 
+import { CONFIG_FILENAMES, findConfig } from './config.ts'
 import { hasErrorCode, isObject } from './utils.ts'
 
 type JsonValue = boolean | JsonObject | JsonValue[] | null | number | string
@@ -11,17 +12,22 @@ interface JsonObject {
   [key: string]: JsonValue
 }
 
-export const VITE_PLUS_VSCODE_SETTINGS: JsonObject = {
-  'editor.defaultFormatter': 'oxc.oxc-vscode',
-  '[javascript]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
-  '[javascriptreact]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
-  '[typescript]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
-  '[typescriptreact]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
-  'oxc.disableNestedConfig': true,
-  'oxc.fmt.disableNestedConfig': true,
-  'editor.formatOnSave': true,
-  'editor.formatOnSaveMode': 'file',
-  'editor.codeActionsOnSave': { 'source.fixAll.oxc': 'explicit' },
+/** VS Code settings that point both Oxc language servers at the unified config. */
+export function createVsCodeSettings(configPath: string): JsonObject {
+  return {
+    'editor.defaultFormatter': 'oxc.oxc-vscode',
+    '[javascript]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
+    '[javascriptreact]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
+    '[typescript]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
+    '[typescriptreact]': { 'editor.defaultFormatter': 'oxc.oxc-vscode' },
+    'oxc.configPath': configPath,
+    'oxc.fmt.configPath': configPath,
+    'oxc.disableNestedConfig': true,
+    'oxc.fmt.disableNestedConfig': true,
+    'editor.formatOnSave': true,
+    'editor.formatOnSaveMode': 'file',
+    'editor.codeActionsOnSave': { 'source.fixAll.oxc': 'explicit' },
+  }
 }
 
 export type VsCodeSettingsInitialization = 'created' | 'unchanged' | 'updated'
@@ -40,8 +46,8 @@ function detectFormattingOptions(text: string): FormattingOptions {
   }
 }
 
-function serializeSettings(eol: string): string {
-  return JSON.stringify(VITE_PLUS_VSCODE_SETTINGS, null, 2).replaceAll('\n', eol) + eol
+function serializeSettings(settings: JsonObject, eol: string): string {
+  return JSON.stringify(settings, null, 2).replaceAll('\n', eol) + eol
 }
 
 function mergeMissingSettings(
@@ -79,6 +85,13 @@ function mergeMissingSettings(
 export async function initializeVsCodeSettings(
   projectRoot = process.cwd(),
 ): Promise<VsCodeSettingsInitialization> {
+  const configPath = await findConfig(projectRoot)
+  if (!configPath) {
+    throw new Error(`Create one of ${CONFIG_FILENAMES.join(', ')} before running oxc init`)
+  }
+  const settings = createVsCodeSettings(
+    path.relative(projectRoot, configPath).split(path.sep).join('/'),
+  )
   const settingsPath = path.join(projectRoot, '.vscode', 'settings.json')
   let originalText: string
 
@@ -90,12 +103,12 @@ export async function initializeVsCodeSettings(
     }
 
     await mkdir(path.dirname(settingsPath), { recursive: true })
-    await writeFile(settingsPath, serializeSettings('\n'), 'utf8')
+    await writeFile(settingsPath, serializeSettings(settings, '\n'), 'utf8')
     return 'created'
   }
 
   if (originalText.trim().length === 0) {
-    await writeFile(settingsPath, serializeSettings(detectEol(originalText)), 'utf8')
+    await writeFile(settingsPath, serializeSettings(settings, detectEol(originalText)), 'utf8')
     return 'updated'
   }
 
@@ -110,7 +123,7 @@ export async function initializeVsCodeSettings(
   const updatedText = mergeMissingSettings(
     originalText,
     existing,
-    VITE_PLUS_VSCODE_SETTINGS,
+    settings,
     detectFormattingOptions(originalText),
   )
   if (updatedText === originalText) {

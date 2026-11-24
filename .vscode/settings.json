@@ -25,6 +25,8 @@
   "[markdown]": {
     "files.trimTrailingWhitespace": false
   },
+  "oxc.configPath": "oxc.config.ts",
+  "oxc.fmt.configPath": "oxc.config.ts",
   "oxc.disableNestedConfig": true,
   "oxc.fmt.disableNestedConfig": true,
 

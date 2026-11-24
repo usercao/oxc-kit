@@ -2,6 +2,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
+import { findConfig } from './config.ts'
 import type { OxcTool } from './types.ts'
 import './vite-plus-hooks.ts'
 
@@ -39,10 +40,26 @@ export function enableVitePlusConfigDiscovery(environment: NodeJS.ProcessEnv, to
   }
 }
 
+function isConfigArgument(argument: string): boolean {
+  return argument === '-c' || argument === '--config' || argument.startsWith('--config=')
+}
+
+/**
+ * Points the tool at the nearest `oxc.config.*`, which it loads through the `vite-plus` shim.
+ * Language servers take the path from the editor's `configPath` settings instead.
+ */
+async function withUnifiedConfig(args: string[]): Promise<string[]> {
+  if (args.includes('--lsp') || args.some(isConfigArgument)) {
+    return args
+  }
+  const configPath = await findConfig()
+  return configPath ? ['--config', configPath, ...args] : args
+}
+
 /** Runs the original tool CLI in this process; the tool sets `process.exitCode` itself. */
 export async function runTool(tool: OxcTool, args: string[]): Promise<void> {
   const binPath = resolveToolBin(tool)
   enableVitePlusConfigDiscovery(process.env, tool)
-  process.argv = [process.execPath, binPath, ...args]
+  process.argv = [process.execPath, binPath, ...(await withUnifiedConfig(args))]
   await import(pathToFileURL(binPath).href)
 }

@@ -21,7 +21,10 @@ async function formatWithLsp(configDirectory: string, sourcePath: string): Promi
     await session.request('initialize', {
       capabilities: { textDocument: { formatting: {} } },
       initializationOptions: [
-        { options: { 'fmt.disableNestedConfig': true }, workspaceUri: rootUri },
+        {
+          options: { 'fmt.configPath': 'oxc.config.mjs', 'fmt.disableNestedConfig': true },
+          workspaceUri: rootUri,
+        },
       ],
       processId: null,
       rootUri,
@@ -56,7 +59,12 @@ async function lintWithLsp(configDirectory: string, sourcePath: string): Promise
         textDocument: { diagnostic: {} },
         workspace: { diagnostics: { refreshSupport: true } },
       },
-      initializationOptions: [{ options: { disableNestedConfig: true }, workspaceUri: rootUri }],
+      initializationOptions: [
+        {
+          options: { configPath: 'oxc.config.mjs', disableNestedConfig: true },
+          workspaceUri: rootUri,
+        },
+      ],
       processId: process.pid,
       rootUri: null,
       workspaceFolders: [{ name: 'fixture', uri: rootUri }],
