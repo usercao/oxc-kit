@@ -15,6 +15,6 @@
     "erasableSyntaxOnly": true,
     "noEmit": true
   },
-  "include": ["scripts/**/*.ts", "src/**/*.ts", "test/**/*.ts"],
+  "include": ["oxc.config.ts", "vite.config.ts", "scripts/**/*.ts", "src/**/*.ts", "test/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

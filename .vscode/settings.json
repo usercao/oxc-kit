@@ -26,5 +26,9 @@
     "files.trimTrailingWhitespace": false
   },
   "oxc.disableNestedConfig": true,
-  "oxc.fmt.disableNestedConfig": true
+  "oxc.fmt.disableNestedConfig": true,
+
+  // Dogfood this repository's wrappers (run `yarn build` first)
+  "oxc.path.oxfmt": "./bin/oxfmt.js",
+  "oxc.path.oxlint": "./bin/oxlint.js"
 }
