@@ -68,13 +68,15 @@ Vite Oxc Bridge discovers the nearest `oxc.config.*` and passes it unchanged to 
 and Oxlint binaries, which read the `fmt` and `lint` sections respectively. Internally, the bridge
 implements the unified configuration protocol used by Vite+; Vite and its plugins are not started.
 
-The root `oxc.config.*` file is reloaded when Oxc requests it. Node.js caches modules imported by that file for the lifetime of the process, so restart the Oxc language servers after changing imported configuration helpers.
+The root `oxc.config.*` file is reloaded when Oxc requests it after the file has changed. Node.js caches modules imported by that file for the lifetime of the process, so restart the Oxc language servers after changing imported configuration helpers.
 
 ## Requirements
 
 - Node.js 24.22.0 or later
-- Vite 8 or later
-- An `oxc.config.ts`, `.mts`, `.cts`, `.js`, `.mjs`, or `.cjs` file that default-exports an object
+- Vite 8 or later. The bridge never imports Vite; a `vite.config.*` file only anchors config discovery.
+- An `oxc.config.ts`, `.mts`, `.cts`, `.js`, `.mjs`, or `.cjs` file that default-exports an object.
+  TypeScript configs run through Node.js type stripping, so syntax that needs transformation, such as
+  `enum` or `namespace`, is not supported.
 
 ## License
 
