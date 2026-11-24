@@ -3,7 +3,6 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 
 import type { OxcTool } from './index.js'
-import { resolveTsgolintExecutable } from './tsgolint-path.js'
 
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as { version: string }
@@ -23,8 +22,12 @@ export async function resolveToolBin(tool: OxcTool): Promise<string> {
 }
 
 export function resolveTsgolintBin(): string {
-  const manifestPath = require.resolve('oxlint-tsgolint/package.json')
-  return resolveTsgolintExecutable(path.join(path.dirname(manifestPath), 'bin', 'tsgolint.js'))
+  // Resolve the native binary from oxlint-tsgolint's own context so strict layouts (pnpm, PnP) work.
+  const tsgolintRequire = createRequire(require.resolve('oxlint-tsgolint/package.json'))
+  const executable = process.platform === 'win32' ? 'tsgolint.exe' : 'tsgolint'
+  return tsgolintRequire.resolve(
+    `@oxlint-tsgolint/${process.platform}-${process.arch}/${executable}`,
+  )
 }
 
 export function enableVitePlusConfigDiscovery(
