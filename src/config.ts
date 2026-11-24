@@ -1,4 +1,4 @@
-import { access, stat } from 'node:fs/promises'
+import { readdir, stat } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -16,17 +16,16 @@ const CONFIG_FILENAMES = [
 
 const require = createRequire(import.meta.url)
 
-async function exists(filePath: string): Promise<boolean> {
+async function readDirectoryEntries(directory: string): Promise<Set<string>> {
   try {
-    await access(filePath)
-    return true
+    return new Set(await readdir(directory))
   } catch (error) {
     if (
       error instanceof Error &&
       'code' in error &&
       (error.code === 'ENOENT' || error.code === 'ENOTDIR')
     ) {
-      return false
+      return new Set()
     }
     throw error
   }
@@ -36,14 +35,10 @@ export async function findConfig(startDirectory = process.cwd()): Promise<string
   let directory = path.resolve(startDirectory)
 
   while (true) {
-    const matches = (
-      await Promise.all(
-        CONFIG_FILENAMES.map(async (filename) => {
-          const filePath = path.join(directory, filename)
-          return (await exists(filePath)) ? filePath : undefined
-        }),
-      )
-    ).filter((filePath): filePath is string => filePath !== undefined)
+    const entries = await readDirectoryEntries(directory)
+    const matches = CONFIG_FILENAMES.filter((filename) => entries.has(filename)).map((filename) =>
+      path.join(directory, filename),
+    )
 
     if (matches.length > 1) {
       throw new Error(`Multiple unified Oxc configs found in ${directory}: ${matches.join(', ')}`)

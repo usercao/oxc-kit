@@ -3,12 +3,12 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
-const { accessMock } = vi.hoisted(() => ({ accessMock: vi.fn() }))
+const { readdirMock } = vi.hoisted(() => ({ readdirMock: vi.fn() }))
 
 vi.mock('node:fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs/promises')>()
-  accessMock.mockImplementation(actual.access)
-  return { ...actual, access: accessMock }
+  readdirMock.mockImplementation(actual.readdir)
+  return { ...actual, readdir: readdirMock }
 })
 
 import { findConfig, loadConfig } from '../src/config.ts'
@@ -150,7 +150,7 @@ describe('config discovery', () => {
   test('preserves file system errors while discovering a configuration', async () => {
     const directory = await createTempDirectory('vite-oxc-bridge-access-error-')
     const error = Object.assign(new Error('permission denied'), { code: 'EACCES' })
-    accessMock.mockRejectedValueOnce(error)
+    readdirMock.mockRejectedValueOnce(error)
 
     await expect(findConfig(directory)).rejects.toBe(error)
   })
