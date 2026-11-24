@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import type { OxcConfig } from './index.js'
+import type { OxcConfig } from './index.ts'
 
 const CONFIG_FILENAMES = [
   'oxc.config.ts',

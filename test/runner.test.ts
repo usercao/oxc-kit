@@ -5,12 +5,12 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 const { spawnMock } = vi.hoisted(() => ({ spawnMock: vi.fn() }))
 
 vi.mock('node:child_process', () => ({ spawn: spawnMock }))
-vi.mock('../src/tool.js', () => ({
+vi.mock('../src/tool.ts', () => ({
   enableVitePlusConfigDiscovery: vi.fn(),
   resolveToolBin: vi.fn(async () => '/fixture/oxfmt.js'),
 }))
 
-const { runTool } = await import('../src/runner.js')
+const { runTool } = await import('../src/runner.ts')
 const signals = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const
 
 function createChild() {

@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
-import type { OxcTool } from './index.js'
+import type { OxcTool } from './index.ts'
 
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as { version: string }

@@ -4,8 +4,8 @@ import path from 'node:path'
 import { parse } from 'jsonc-parser'
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { initializeVsCodeSettings, VITE_PLUS_VSCODE_SETTINGS } from '../src/vscode-settings.js'
-import { cleanupTemporaryDirectories, createTempDirectory } from './helpers.js'
+import { initializeVsCodeSettings, VITE_PLUS_VSCODE_SETTINGS } from '../src/vscode-settings.ts'
+import { cleanupTemporaryDirectories, createTempDirectory } from './helpers.ts'
 
 afterEach(async () => {
   await cleanupTemporaryDirectories()

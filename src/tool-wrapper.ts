@@ -1,8 +1,8 @@
 import { pathToFileURL } from 'node:url'
 
-import './vite-plus-preload.js'
-import type { OxcTool } from './index.js'
-import { enableVitePlusConfigDiscovery, resolveToolBin } from './tool.js'
+import './vite-plus-preload.ts'
+import type { OxcTool } from './index.ts'
+import { enableVitePlusConfigDiscovery, resolveToolBin } from './tool.ts'
 
 function isEditorInvocation(tool: OxcTool): boolean {
   if (process.argv.includes('--lsp')) {

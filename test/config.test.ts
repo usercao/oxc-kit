@@ -11,16 +11,16 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   return { ...actual, access: accessMock }
 })
 
-import { findConfig, loadConfig } from '../src/config.js'
+import { findConfig, loadConfig } from '../src/config.ts'
 import {
   resolveConfig as resolveVitePlusConfig,
   resolveConfigFromFile,
-} from '../src/vite-plus-shim.js'
+} from '../src/vite-plus-shim.ts'
 import {
   cleanupTemporaryDirectories,
   createTempDirectory,
   createUnifiedFixture,
-} from './helpers.js'
+} from './helpers.ts'
 
 const CONFIG_EXTENSION_CASES = [
   { extension: 'ts', module: 'esm' },

@@ -12,5 +12,5 @@ export function defineConfig<const Config extends OxcConfig>(config: Config): Co
   return config
 }
 
-export { runTool } from './runner.js'
-export { initializeVsCodeSettings } from './vscode-settings.js'
+export { runTool } from './runner.ts'
+export { initializeVsCodeSettings } from './vscode-settings.ts'

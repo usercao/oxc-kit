@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { runTool } from './runner.js'
-import { initializeVsCodeSettings } from './vscode-settings.js'
+import { runTool } from './runner.ts'
+import { initializeVsCodeSettings } from './vscode-settings.ts'
 
 const HELP = `Usage: oxc <command> [options] [tool arguments]
 

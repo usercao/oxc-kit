@@ -1,9 +1,8 @@
 import { registerHooks } from 'node:module'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
-const moduleExtension = path.extname(fileURLToPath(import.meta.url))
-const shimUrl = new URL(`./vite-plus-shim${moduleExtension}`, import.meta.url).href
+import { siblingUrl } from './sibling-url.ts'
+
+const shimUrl = siblingUrl('vite-plus-shim', import.meta.url)
 
 registerHooks({
   resolve(specifier, context, nextResolve) {

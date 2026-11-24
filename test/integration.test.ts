@@ -3,12 +3,12 @@ import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { runTool } from '../src/runner.js'
+import { runTool } from '../src/runner.ts'
 import {
   cleanupTemporaryDirectories,
   createTempDirectory,
   createUnifiedFixture,
-} from './helpers.js'
+} from './helpers.ts'
 
 afterEach(async () => {
   await cleanupTemporaryDirectories()

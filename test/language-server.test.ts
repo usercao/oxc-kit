@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { afterEach, describe, expect, test } from 'vitest'
 
-import { cleanupTemporaryDirectories, createUnifiedFixture } from './helpers.js'
+import { cleanupTemporaryDirectories, createUnifiedFixture } from './helpers.ts'
 
 interface LspMessage {
   error?: { message?: string }
