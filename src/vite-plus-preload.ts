@@ -1,7 +1,14 @@
-import { register } from 'node:module'
+import { registerHooks } from 'node:module'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const moduleExtension = path.extname(fileURLToPath(import.meta.url))
+const shimUrl = new URL(`./vite-plus-shim${moduleExtension}`, import.meta.url).href
 
-register(new URL(`./vite-plus-loader${moduleExtension}`, import.meta.url), import.meta.url)
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    return specifier === 'vite-plus'
+      ? { shortCircuit: true, url: shimUrl }
+      : nextResolve(specifier, context)
+  },
+})
