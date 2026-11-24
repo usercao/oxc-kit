@@ -36,7 +36,6 @@ describe('Oxc tool integration', () => {
     enableVitePlusConfigDiscovery(environment, 'oxlint')
 
     expect(environment.VP_VERSION).toBe(packageManifest.version)
-    expect(environment.VP_RESOLVING_CONFIG_METADATA).toBe('1')
     expect(environment.OXLINT_TSGOLINT_PATH).toBe(resolveTsgolintBin())
     await expect(access(environment.OXLINT_TSGOLINT_PATH!)).resolves.toBeUndefined()
   })

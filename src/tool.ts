@@ -34,7 +34,6 @@ export function resolveTsgolintBin(): string {
 
 export function enableVitePlusConfigDiscovery(environment: NodeJS.ProcessEnv, tool: OxcTool): void {
   environment.VP_VERSION = packageManifest.version
-  environment.VP_RESOLVING_CONFIG_METADATA ??= '1'
   if (tool === 'oxlint') {
     environment.OXLINT_TSGOLINT_PATH ??= resolveTsgolintBin()
   }
