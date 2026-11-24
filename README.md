@@ -13,12 +13,14 @@ under `fmt` and `lint` in a single configuration:
 ## Install
 
 ```sh
-npm install --save-dev vite vite-oxc-bridge
+npm install --save-dev vite-oxc-bridge
 ```
 
 ## Configure
 
-Keep your project's existing `vite.config.*`. It is the discovery anchor for the nearest `oxc.config.*`.
+Oxfmt and Oxlint only hand config loading to the bridge after they find a `vite.config.*` file, so
+keep your project's existing one. The bridge never reads it, so projects without Vite can add an
+empty `vite.config.ts` containing `export default {}`; Vite itself does not need to be installed.
 Move the contents of `.oxfmtrc.json` into `fmt` and `.oxlintrc.json` into `lint`:
 
 ```ts
@@ -73,7 +75,8 @@ The root `oxc.config.*` file is reloaded when Oxc requests it after the file has
 ## Requirements
 
 - Node.js 24.22.0 or later
-- Vite 8 or later. The bridge never imports Vite; a `vite.config.*` file only anchors config discovery.
+- A `vite.config.*` file next to or above the files being checked. Its content is not read, and Vite
+  does not need to be installed.
 - An `oxc.config.ts`, `.mts`, `.cts`, `.js`, `.mjs`, or `.cjs` file that default-exports an object.
   TypeScript configs run through Node.js type stripping, so syntax that needs transformation, such as
   `enum` or `namespace`, is not supported.

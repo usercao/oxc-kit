@@ -1974,8 +1974,6 @@ __metadata:
     typescript: "npm:^7"
     vite: "npm:^8.3.8"
     vitest: "npm:^5.1.1"
-  peerDependencies:
-    vite: ">=8.0.0"
   bin:
     oxc: dist/cli.js
     oxfmt: bin/oxfmt.js
