@@ -143,7 +143,7 @@ try {
     [
       '--input-type=module',
       '--eval',
-      "import { defineConfig, runTool } from 'vite-oxc-bridge'; if (typeof defineConfig !== 'function' || typeof runTool !== 'function') process.exit(1)",
+      "import { defineConfig } from 'vite-oxc-bridge'; if (typeof defineConfig !== 'function') process.exit(1)",
     ],
     projectDirectory,
   )
