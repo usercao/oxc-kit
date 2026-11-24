@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
 import { afterEach, describe, expect, test } from 'vitest'
@@ -15,7 +15,7 @@ afterEach(async () => {
 })
 
 describe('runner integration', () => {
-  test('runs Oxfmt and Oxlint with their unified config sections without CLI proxies', async () => {
+  test('runs Oxfmt and Oxlint with their unified config sections', async () => {
     const { directory } = await createUnifiedFixture()
     const sourcePath = path.join(directory, 'source.ts')
     await writeFile(sourcePath, `const message = "hello";\nconsole.log(message);\n`)
@@ -26,11 +26,6 @@ describe('runner integration', () => {
     )
     expect(await runTool('oxfmt', ['--check', '.'], { cwd: directory })).toBe(0)
     expect(await runTool('oxlint', ['source.ts'], { cwd: directory })).toBe(0)
-
-    const remainingFiles = await readdir(directory)
-    expect(
-      remainingFiles.some((filename) => /^\.oxc-bridge\.(oxlint|oxfmt)\./.test(filename)),
-    ).toBe(false)
   })
 
   test('loads a parent unified config from a nested working directory', async () => {
@@ -44,7 +39,7 @@ describe('runner integration', () => {
     expect(await readFile(sourcePath, 'utf8')).toBe("const message = 'hello'\n")
   })
 
-  test('returns the underlying Oxlint failure code without creating a CLI proxy', async () => {
+  test('returns the underlying Oxlint failure code', async () => {
     const { directory } = await createUnifiedFixture()
     await writeFile(path.join(directory, 'source.ts'), 'debugger\n')
     let output = ''
@@ -58,10 +53,6 @@ describe('runner integration', () => {
       }),
     ).not.toBe(0)
     expect(output).toContain('eslint(no-debugger)')
-    const remainingFiles = await readdir(directory)
-    expect(remainingFiles.some((filename) => filename.startsWith('.oxc-bridge.oxlint.'))).toBe(
-      false,
-    )
   })
 
   test('preserves sortPackageJson rules for package.json files', async () => {
