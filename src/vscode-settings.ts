@@ -3,6 +3,8 @@ import path from 'node:path'
 
 import { applyEdits, modify, parse, type FormattingOptions, type ParseError } from 'jsonc-parser'
 
+import { hasErrorCode, isObject } from './utils.ts'
+
 type JsonValue = boolean | JsonObject | JsonValue[] | null | number | string
 
 interface JsonObject {
@@ -24,32 +26,22 @@ export const VITE_PLUS_VSCODE_SETTINGS: JsonObject = {
 
 export type VsCodeSettingsInitialization = 'created' | 'unchanged' | 'updated'
 
-function isJsonObject(value: unknown): value is JsonObject {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function isMissingFile(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: unknown }).code === 'ENOENT'
-  )
+function detectEol(text: string): string {
+  return text.includes('\r\n') ? '\r\n' : '\n'
 }
 
 function detectFormattingOptions(text: string): FormattingOptions {
   const indentation = /^([\t ]+)"/m.exec(text)?.[1] ?? '  '
 
   return {
-    eol: text.includes('\r\n') ? '\r\n' : '\n',
+    eol: detectEol(text),
     insertSpaces: !indentation.includes('\t'),
     tabSize: indentation.includes('\t') ? 1 : indentation.length,
   }
 }
 
-function serializeSettings(formattingOptions: FormattingOptions): string {
-  const text = JSON.stringify(VITE_PLUS_VSCODE_SETTINGS, null, formattingOptions.tabSize ?? 2)
-  return text.replaceAll('\n', formattingOptions.eol ?? '\n') + (formattingOptions.eol ?? '\n')
+function serializeSettings(eol: string): string {
+  return JSON.stringify(VITE_PLUS_VSCODE_SETTINGS, null, 2).replaceAll('\n', eol) + eol
 }
 
 function mergeMissingSettings(
@@ -74,7 +66,7 @@ function mergeMissingSettings(
           updatedText,
           modify(updatedText, settingPath, incomingValue, { formattingOptions }),
         )
-      } else if (isJsonObject(existingValue) && isJsonObject(incomingValue)) {
+      } else if (isObject(existingValue) && isObject(incomingValue)) {
         insertMissingSettings(existingValue, incomingValue, settingPath)
       }
     }
@@ -93,25 +85,23 @@ export async function initializeVsCodeSettings(
   try {
     originalText = await readFile(settingsPath, 'utf8')
   } catch (error) {
-    if (!isMissingFile(error)) {
+    if (!hasErrorCode(error, 'ENOENT')) {
       throw error
     }
 
-    const formattingOptions = detectFormattingOptions('')
     await mkdir(path.dirname(settingsPath), { recursive: true })
-    await writeFile(settingsPath, serializeSettings(formattingOptions), 'utf8')
+    await writeFile(settingsPath, serializeSettings('\n'), 'utf8')
     return 'created'
   }
 
-  const formattingOptions = detectFormattingOptions(originalText)
   if (originalText.trim().length === 0) {
-    await writeFile(settingsPath, serializeSettings(formattingOptions), 'utf8')
+    await writeFile(settingsPath, serializeSettings(detectEol(originalText)), 'utf8')
     return 'updated'
   }
 
   const errors: ParseError[] = []
-  const existing = parse(originalText, errors, { allowTrailingComma: true })
-  if (errors.length > 0 || !isJsonObject(existing)) {
+  const existing: JsonValue = parse(originalText, errors, { allowTrailingComma: true })
+  if (errors.length > 0 || !isObject(existing)) {
     throw new Error(
       `Unable to merge ${path.relative(projectRoot, settingsPath)}: expected a JSONC object`,
     )
@@ -121,7 +111,7 @@ export async function initializeVsCodeSettings(
     originalText,
     existing,
     VITE_PLUS_VSCODE_SETTINGS,
-    formattingOptions,
+    detectFormattingOptions(originalText),
   )
   if (updatedText === originalText) {
     return 'unchanged'

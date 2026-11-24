@@ -4,6 +4,7 @@ import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 import type { OxcConfig } from './index.ts'
+import { hasErrorCode, isObject } from './utils.ts'
 
 const CONFIG_FILENAMES = [
   'oxc.config.ts',
@@ -20,11 +21,7 @@ async function readDirectoryEntries(directory: string): Promise<Set<string>> {
   try {
     return new Set(await readdir(directory))
   } catch (error) {
-    if (
-      error instanceof Error &&
-      'code' in error &&
-      (error.code === 'ENOENT' || error.code === 'ENOTDIR')
-    ) {
+    if (hasErrorCode(error, 'ENOENT', 'ENOTDIR')) {
       return new Set()
     }
     throw error
@@ -53,10 +50,6 @@ export async function findConfig(startDirectory = process.cwd()): Promise<string
     }
     directory = parent
   }
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 export async function loadConfig(configPath: string): Promise<OxcConfig> {
