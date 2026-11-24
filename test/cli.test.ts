@@ -42,7 +42,7 @@ afterEach(async () => {
   await cleanupTemporaryDirectories()
 })
 
-describe('runner integration', () => {
+describe('oxc CLI', () => {
   test('runs Oxfmt and Oxlint with their unified config sections', async () => {
     const { directory } = await createUnifiedFixture()
     const sourcePath = path.join(directory, 'source.ts')
