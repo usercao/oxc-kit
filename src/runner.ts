@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url'
 
-import './vite-plus-preload.ts'
+import './vite-plus-hooks.ts'
 import { enableVitePlusConfigDiscovery, resolveToolBin } from './tool.ts'
 import type { OxcTool } from './types.ts'
 

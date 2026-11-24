@@ -34,7 +34,7 @@
   ],
   "type": "module",
   "sideEffects": [
-    "./dist/vite-plus-preload.js"
+    "./dist/vite-plus-hooks.js"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
