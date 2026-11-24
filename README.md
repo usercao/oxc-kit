@@ -78,6 +78,11 @@ This creates or updates `.vscode/settings.json` so that the extension formats an
 `oxc.config.*`. Existing values and JSONC comments are kept. The extension finds the `oxc-kit`
 binaries automatically; do not set `oxc.path.oxfmt` or `oxc.path.oxlint`.
 
+`oxc init` also sets `editor.defaultFormatter` per language, even when the top-level value is
+already Oxc. VS Code applies language-specific settings before general ones in every scope, so a
+language-specific formatter in your user settings would otherwise override the workspace setting.
+Add the same override for any other language you want Oxc to format.
+
 The config file is reloaded when it changes. Modules imported by the config are cached until the
 editor restarts the Oxc language servers.
 

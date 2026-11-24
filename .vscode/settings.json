@@ -32,5 +32,22 @@
 
   // Dogfood this repository's wrappers (run `yarn build` first)
   "oxc.path.oxfmt": "./bin/oxfmt.js",
-  "oxc.path.oxlint": "./bin/oxlint.js"
+  "oxc.path.oxlint": "./bin/oxlint.js",
+
+  // Format JavaScript and TypeScript with the Oxc extension
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  // Format whole files and apply Oxlint fixes on save
+  "editor.formatOnSaveMode": "file"
 }

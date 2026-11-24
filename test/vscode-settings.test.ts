@@ -23,6 +23,16 @@ describe('VS Code settings initialization', () => {
     const settingsText = await readFile(path.join(directory, '.vscode', 'settings.json'), 'utf8')
 
     expect(parse(settingsText)).toEqual(createVsCodeSettings('oxc.config.mjs'))
+    expect(settingsText).toContain(
+      '},\n\n  // Load Oxfmt and Oxlint options from oxc.config.mjs\n  "oxc.configPath"',
+    )
+    expect(settingsText.match(/^ {2}\/\/ .+$/gm)).toEqual([
+      '  // Format JavaScript and TypeScript with the Oxc extension',
+      '  // Load Oxfmt and Oxlint options from oxc.config.mjs',
+      '  // Ignore nested Oxfmt and Oxlint configs',
+      '  // Format whole files and apply Oxlint fixes on save',
+    ])
+    expect(settingsText.startsWith('{\n  // Format JavaScript')).toBe(true)
   })
 
   test('merges missing settings without replacing JSONC comments or existing values', async () => {
@@ -46,6 +56,9 @@ describe('VS Code settings initialization', () => {
     const settings = parse(settingsText) as Record<string, unknown>
 
     expect(settingsText).toContain('// Keep project-specific formatter behavior.')
+    expect(settingsText).toContain(
+      '\n\n  // Load Oxfmt and Oxlint options from oxc.config.mjs\n  "oxc.configPath"',
+    )
     expect(settings['editor.formatOnSave']).toBe(false)
     expect(settings['oxc.configPath']).toBe('oxc.config.mjs')
     expect(settings['oxc.fmt.configPath']).toBe('oxc.config.mjs')
@@ -55,6 +68,19 @@ describe('VS Code settings initialization', () => {
       'source.fixAll.oxc': 'explicit',
       'source.organizeImports': 'explicit',
     })
+  })
+
+  test('does not comment config paths that are already set', async () => {
+    const { directory } = await createUnifiedFixture()
+    const settingsPath = path.join(directory, '.vscode', 'settings.json')
+    await mkdir(path.dirname(settingsPath), { recursive: true })
+    await writeFile(
+      settingsPath,
+      '{\n  "oxc.configPath": "custom.mjs",\n  "oxc.fmt.configPath": "custom.mjs"\n}\n',
+    )
+
+    await expect(initializeVsCodeSettings(directory)).resolves.toBe('updated')
+    await expect(readFile(settingsPath, 'utf8')).resolves.not.toContain('// Load Oxfmt')
   })
 
   test('requires a unified config to point the settings at', async () => {

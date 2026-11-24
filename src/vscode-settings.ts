@@ -1,7 +1,15 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { applyEdits, modify, parse, type FormattingOptions, type ParseError } from 'jsonc-parser'
+import {
+  applyEdits,
+  findNodeAtLocation,
+  modify,
+  parse,
+  parseTree,
+  type FormattingOptions,
+  type ParseError,
+} from 'jsonc-parser'
 
 import { CONFIG_FILENAMES, findConfig } from './config.ts'
 import { hasErrorCode, isObject } from './utils.ts'
@@ -50,11 +58,84 @@ function serializeSettings(settings: JsonObject, eol: string): string {
   return JSON.stringify(settings, null, 2).replaceAll('\n', eol) + eol
 }
 
+interface SettingGroup {
+  comment: string
+  keys: string[]
+}
+
+function createSettingGroups(configPath: string): SettingGroup[] {
+  return [
+    {
+      comment: 'Format JavaScript and TypeScript with the Oxc extension',
+      keys: [
+        'editor.defaultFormatter',
+        '[javascript]',
+        '[javascriptreact]',
+        '[typescript]',
+        '[typescriptreact]',
+      ],
+    },
+    {
+      comment: `Load Oxfmt and Oxlint options from ${configPath}`,
+      keys: ['oxc.configPath', 'oxc.fmt.configPath'],
+    },
+    {
+      comment: 'Ignore nested Oxfmt and Oxlint configs',
+      keys: ['oxc.disableNestedConfig', 'oxc.fmt.disableNestedConfig'],
+    },
+    {
+      comment: 'Format whole files and apply Oxlint fixes on save',
+      keys: ['editor.formatOnSave', 'editor.formatOnSaveMode', 'editor.codeActionsOnSave'],
+    },
+  ]
+}
+
+function insertComment(text: string, offset: number, comment: string): string {
+  const lineStart = text.lastIndexOf('\n', offset - 1) + 1
+  const indentation = text.slice(lineStart, offset)
+  if (indentation.trim().length > 0) {
+    return text
+  }
+
+  const eol = detectEol(text)
+  const before = text.slice(0, lineStart)
+  const previousLine = before.trimEnd().split('\n').at(-1) ?? ''
+  const precededByBlankLine = /\n[\t ]*\r?\n$/.test(before)
+  const blankLine = precededByBlankLine || previousLine.trimEnd().endsWith('{') ? '' : eol
+  return before + blankLine + `${indentation}// ${comment}${eol}` + text.slice(lineStart)
+}
+
+/** Adds a blank line and a comment above the first newly written setting of each group. */
+function annotateSettingGroups(
+  text: string,
+  configPath: string,
+  addedKeys: ReadonlySet<string>,
+): string {
+  const root = parseTree(text)
+  if (!root) {
+    return text
+  }
+
+  const annotations = createSettingGroups(configPath).flatMap(({ comment, keys }) => {
+    const offsets = keys
+      .filter((key) => addedKeys.has(key))
+      .map((key) => findNodeAtLocation(root, [key])?.parent?.offset)
+      .filter((offset) => offset !== undefined)
+    return offsets.length > 0 ? [{ comment, offset: Math.min(...offsets) }] : []
+  })
+
+  // Insert from the end so earlier offsets stay valid.
+  return annotations
+    .toSorted((a, b) => b.offset - a.offset)
+    .reduce((current, { comment, offset }) => insertComment(current, offset, comment), text)
+}
+
 function mergeMissingSettings(
   text: string,
   existing: JsonObject,
   incoming: JsonObject,
   formattingOptions: FormattingOptions,
+  addedKeys: Set<string>,
 ): string {
   let updatedText = text
 
@@ -68,6 +149,9 @@ function mergeMissingSettings(
       const settingPath = [...currentPath, key]
 
       if (!(key in existingNode)) {
+        if (currentPath.length === 0) {
+          addedKeys.add(key)
+        }
         updatedText = applyEdits(
           updatedText,
           modify(updatedText, settingPath, incomingValue, { formattingOptions }),
@@ -89,9 +173,9 @@ export async function initializeVsCodeSettings(
   if (!configPath) {
     throw new Error(`Create one of ${CONFIG_FILENAMES.join(', ')} before running oxc init`)
   }
-  const settings = createVsCodeSettings(
-    path.relative(projectRoot, configPath).split(path.sep).join('/'),
-  )
+  const relativeConfigPath = path.relative(projectRoot, configPath).split(path.sep).join('/')
+  const settings = createVsCodeSettings(relativeConfigPath)
+  const allKeys = new Set(Object.keys(settings))
   const settingsPath = path.join(projectRoot, '.vscode', 'settings.json')
   let originalText: string
 
@@ -103,12 +187,17 @@ export async function initializeVsCodeSettings(
     }
 
     await mkdir(path.dirname(settingsPath), { recursive: true })
-    await writeFile(settingsPath, serializeSettings(settings, '\n'), 'utf8')
+    await writeFile(
+      settingsPath,
+      annotateSettingGroups(serializeSettings(settings, '\n'), relativeConfigPath, allKeys),
+      'utf8',
+    )
     return 'created'
   }
 
   if (originalText.trim().length === 0) {
-    await writeFile(settingsPath, serializeSettings(settings, detectEol(originalText)), 'utf8')
+    const text = serializeSettings(settings, detectEol(originalText))
+    await writeFile(settingsPath, annotateSettingGroups(text, relativeConfigPath, allKeys), 'utf8')
     return 'updated'
   }
 
@@ -120,16 +209,22 @@ export async function initializeVsCodeSettings(
     )
   }
 
+  const addedKeys = new Set<string>()
   const updatedText = mergeMissingSettings(
     originalText,
     existing,
     settings,
     detectFormattingOptions(originalText),
+    addedKeys,
   )
   if (updatedText === originalText) {
     return 'unchanged'
   }
 
-  await writeFile(settingsPath, updatedText, 'utf8')
+  await writeFile(
+    settingsPath,
+    annotateSettingGroups(updatedText, relativeConfigPath, addedKeys),
+    'utf8',
+  )
   return 'updated'
 }

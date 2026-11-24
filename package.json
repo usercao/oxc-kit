@@ -1,6 +1,6 @@
 {
   "name": "oxc-kit",
-  "version": "0.7.6",
+  "version": "0.8.3",
   "description": "Configure Oxfmt and Oxlint from one typed oxc.config.ts",
   "keywords": [
     "config",
