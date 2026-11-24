@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
-import { runTool } from './runner.ts'
-import { TOOL_USAGE } from './tool.ts'
+import { runTool, TOOL_USAGE } from './tool.ts'
 import type { OxcTool } from './types.ts'
 import { initializeVsCodeSettings } from './vscode-settings.ts'
 

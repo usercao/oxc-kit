@@ -1,7 +1,9 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import type { OxcTool } from './types.ts'
+import './vite-plus-hooks.ts'
 
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as { version: string }
@@ -36,4 +38,12 @@ export function enableVitePlusConfigDiscovery(environment: NodeJS.ProcessEnv, to
   if (tool === 'oxlint') {
     environment.OXLINT_TSGOLINT_PATH ??= resolveTsgolintBin()
   }
+}
+
+/** Runs the original tool CLI in this process; the tool sets `process.exitCode` itself. */
+export async function runTool(tool: OxcTool, args: string[]): Promise<void> {
+  const binPath = resolveToolBin(tool)
+  enableVitePlusConfigDiscovery(process.env, tool)
+  process.argv = [process.execPath, binPath, ...args]
+  await import(pathToFileURL(binPath).href)
 }
