@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-import type { OxcTool } from './index.ts'
 import { runTool } from './runner.ts'
 import { TOOL_USAGE } from './tool.ts'
+import type { OxcTool } from './types.ts'
 import { initializeVsCodeSettings } from './vscode-settings.ts'
 
 const HELP = `Usage: oxc <command> [options] [tool arguments]

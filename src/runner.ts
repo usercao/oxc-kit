@@ -2,9 +2,9 @@ import { spawn } from 'node:child_process'
 import { constants as osConstants } from 'node:os'
 import path from 'node:path'
 
-import type { OxcTool } from './index.ts'
 import { siblingUrl } from './sibling-url.ts'
 import { enableVitePlusConfigDiscovery, resolveToolBin } from './tool.ts'
+import type { OxcTool } from './types.ts'
 
 const FORWARDED_SIGNALS = ['SIGINT', 'SIGTERM', 'SIGHUP'] as const
 const VITE_PLUS_PRELOAD_URL = siblingUrl('vite-plus-preload', import.meta.url)

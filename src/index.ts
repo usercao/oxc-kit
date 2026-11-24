@@ -1,12 +1,6 @@
-import type { OxfmtConfig } from 'oxfmt'
-import type { OxlintConfig } from 'oxlint'
+import type { OxcConfig } from './types.ts'
 
-export type OxcTool = 'oxfmt' | 'oxlint'
-
-export interface OxcConfig {
-  fmt?: OxfmtConfig
-  lint?: OxlintConfig
-}
+export type { OxcConfig, OxcTool } from './types.ts'
 
 export function defineConfig<const Config extends OxcConfig>(config: Config): Config {
   return config

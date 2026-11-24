@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import path from 'node:path'
 
-import type { OxcTool } from './index.ts'
+import type { OxcTool } from './types.ts'
 
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as { version: string }

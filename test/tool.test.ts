@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url'
 
 import { describe, expect, test } from 'vitest'
 
-import type { OxcTool } from '../src/index.ts'
 import { enableVitePlusConfigDiscovery, resolveTsgolintBin } from '../src/tool.ts'
+import type { OxcTool } from '../src/types.ts'
 
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as {
