@@ -25,5 +25,5 @@ export async function runWrappedTool(tool: OxcTool): Promise<void> {
   }
 
   enableVitePlusConfigDiscovery(process.env, tool)
-  await import(pathToFileURL(await resolveToolBin(tool)).href)
+  await import(pathToFileURL(resolveToolBin(tool)).href)
 }
