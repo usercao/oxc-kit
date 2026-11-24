@@ -6,6 +6,11 @@ import type { OxcTool } from './index.ts'
 const require = createRequire(import.meta.url)
 const packageManifest = require('../package.json') as { version: string }
 
+export const TOOL_USAGE = {
+  oxfmt: { action: 'format', command: 'fmt' },
+  oxlint: { action: 'lint', command: 'lint' },
+} as const satisfies Record<OxcTool, { action: string; command: string }>
+
 export function resolveToolBin(tool: OxcTool): string {
   const manifestPath = require.resolve(`${tool}/package.json`)
   const manifest = require(manifestPath) as { bin?: string | Record<string, string> }

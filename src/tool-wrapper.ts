@@ -2,7 +2,7 @@ import { pathToFileURL } from 'node:url'
 
 import './vite-plus-preload.ts'
 import type { OxcTool } from './index.ts'
-import { enableVitePlusConfigDiscovery, resolveToolBin } from './tool.ts'
+import { enableVitePlusConfigDiscovery, resolveToolBin, TOOL_USAGE } from './tool.ts'
 
 function isEditorInvocation(tool: OxcTool): boolean {
   if (process.argv.includes('--lsp')) {
@@ -15,11 +15,9 @@ function isEditorInvocation(tool: OxcTool): boolean {
 
 export async function runWrappedTool(tool: OxcTool): Promise<void> {
   if (!isEditorInvocation(tool)) {
-    const command = tool === 'oxfmt' ? 'fmt' : 'lint'
+    const { action, command } = TOOL_USAGE[tool]
     process.stderr.write(`This ${tool} wrapper is for IDE extension use only.\n`)
-    process.stderr.write(
-      `To ${command === 'fmt' ? 'format' : 'lint'} your code, run: oxc ${command}\n`,
-    )
+    process.stderr.write(`To ${action} your code, run: oxc ${command}\n`)
     process.exitCode = 1
     return
   }

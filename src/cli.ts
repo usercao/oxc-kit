@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import type { OxcTool } from './index.ts'
 import { runTool } from './runner.ts'
+import { TOOL_USAGE } from './tool.ts'
 import { initializeVsCodeSettings } from './vscode-settings.ts'
 
 const HELP = `Usage: oxc <command> [options] [tool arguments]
@@ -33,8 +35,11 @@ async function main(): Promise<number> {
     return 0
   }
 
-  if (command === 'lint' || command === 'fmt') {
-    return runTool(command === 'lint' ? 'oxlint' : 'oxfmt', args)
+  const tool = (Object.keys(TOOL_USAGE) as OxcTool[]).find(
+    (candidate) => TOOL_USAGE[candidate].command === command,
+  )
+  if (tool) {
+    return runTool(tool, args)
   }
 
   throw new Error(`Unknown command: ${command}\n\n${HELP}`)
